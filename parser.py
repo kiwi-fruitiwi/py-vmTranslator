@@ -63,3 +63,5 @@ class Parser:
     def getCommandType(self) -> Command:
         # TODO stub file; fix this later
         return Command.C_ARITHMETIC
+
+    

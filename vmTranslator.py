@@ -35,17 +35,20 @@ main: drives the process. input: fileName.vm, output: fileName.asm
 
 
 """
-
-
+from codewriter import CodeWriter
 from parser import Parser, Command
 
 
 def main(filename: str) -> None:
     parser = Parser(filename)
+    writer = CodeWriter('output.asm')
 
     while parser.hasMoreCommands():
         parser.advance()
         print(f'{parser.getCurrentCommand()}')
+        writer.writePushPop(parser.getCurrentCommand())
+
+    writer.close()
 
 
 main('vm/StackTest.vm')
