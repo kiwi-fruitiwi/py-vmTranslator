@@ -5,14 +5,23 @@
 ⊼².📹 Unit 1.8: VM Translator: Proposed Implementation
 
 parser: parses each vm command into its lexical elements
-    ignores all whitespace, full-line comments, midline comments
+    ☒ ignores all whitespace, full-line comments, midline comments
     hasMoreCommands() → boolean
     advance
-    commandType → arith, push, pop, label, goto, if, function, ret, call
+
     arg1 → string. returns 1st argument of current command
         not called for return
     arg2 → int. returns second argument of current command
         only called with push, pop, function, call
+
+    commandType → arith, push, pop, label, goto, if, function, ret, call
+        commands needed for project 7
+            arithmetic+logical: [add sub neg, eq gt lt, and or not]
+            memory access: pop segment i, push segment i
+
+        commands needed for project 8
+            branching: label, goto, if-goto
+            function: function name nVars, call name nArgs, return
 
 codeWriter: writes the assembly code that implements the parsed command
     opens file in constructor
@@ -23,35 +32,30 @@ codeWriter: writes the assembly code that implements the parsed command
 main: drives the process. input: fileName.vm, output: fileName.asm
     → iterate through fileName.vm, parse and output with comment
     more routines added in project 8
+
+
 """
 
 
-def test(file: str) -> None:
-    vm = open(file, 'r')
-    lines = vm.readlines()
+from parser import Parser
 
 
-    for line in lines:
-        # ignore whitespace
-        if line == '\n':
-            continue
+def processLine():
+    result = ''
+    # push constant i assembly
+    #   set SP to i
+    #   SP++
 
-        # ignore entire-line comments
-        if line[0] == '/' and line[1] == '/':
-            continue
+    # parse push/pop memorySegmentName value
 
-        # ignore mid-line comments
-        try:
-            index = line.index('//')
-            line = line[0:index]
-        except ValueError:
-            # '//' wasn't found!
-            pass
+    # basic commands: add,
 
-        # strip whitespace
-        line = line.strip()
-
-        print(f'{line}')
+    print(result)
 
 
-test('vm/StackTest.vm')
+def main(file: str) -> None:
+    parser = Parser(file)
+
+
+
+main('vm/StackTest.vm')
