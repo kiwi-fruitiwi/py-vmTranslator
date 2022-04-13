@@ -37,25 +37,20 @@ main: drives the process. input: fileName.vm, output: fileName.asm
 """
 
 
-from parser import Parser
+from parser import Parser, Command
 
 
-def processLine():
-    result = ''
-    # push constant i assembly
-    #   set SP to i
-    #   SP++
+def main(filename: str) -> None:
+    parser = Parser(filename)
 
-    # parse push/pop memorySegmentName value
-
-    # basic commands: add,
-
-    print(result)
-
-
-def main(file: str) -> None:
-    parser = Parser(file)
-
+    while parser.hasMoreCommands():
+        parser.advance()
+        print(f'{parser.getCurrentCommand()}')
 
 
 main('vm/StackTest.vm')
+
+
+# test our enum system
+member = Command.C_ARITHMETIC
+print(f'{member.name}')

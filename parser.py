@@ -1,7 +1,24 @@
+import enum
+
+
+class Command(enum.Enum):
+    C_ARITHMETIC = 1
+    C_PUSH = 2
+    C_POP = 3
+    C_LABEL = 4
+    C_GOTO = 5
+    C_IF = 6
+    C_FUNCTION = 7
+    C_RETURN = 8
+    C_CALL = 9
+
+
 class Parser:
     def __init__(self, filename):
-        vm = open(filename, 'r')
-        lines = vm.readlines()
+        vm_file = open(filename, 'r')
+        lines = vm_file.readlines()
+        self.vm_commands = []
+        self.commandIndex = 0  # current command index
 
         for line in lines:
             # ignore whitespace
@@ -23,4 +40,26 @@ class Parser:
             # strip whitespace
             line = line.strip()
 
+            self.vm_commands.append(line)
+
+
+    def showCommands(self) -> None:
+        for line in self.vm_commands:
             print(f'{line}')
+
+
+    def getCurrentCommand(self) -> str:
+        return self.vm_commands[self.commandIndex]
+
+
+    def hasMoreCommands(self) -> bool:
+        return self.commandIndex < len(self.vm_commands) - 1
+
+
+    def advance(self) -> None:
+        self.commandIndex += 1
+
+
+    def getCommandType(self) -> Command:
+        # TODO stub file; fix this later
+        return Command.C_ARITHMETIC
