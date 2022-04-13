@@ -14,7 +14,18 @@ class Command(enum.Enum):
 
 
 class Parser:
+    """
+    handles the parsing of a single .vm file; reads a vm command, parses the
+    command into its lexical components, and provides convenient access to
+    said components. ignores all whitespace and comments
+    """
     def __init__(self, filename):
+        """
+        opens a .vm file and saves all vm commands for later processing but
+        does not include comments or whitespace
+        :param filename:
+        """
+
         vm_file = open(filename, 'r')
         lines = vm_file.readlines()
         self.vm_commands = []
@@ -43,21 +54,40 @@ class Parser:
             self.vm_commands.append(line)
 
 
-    def getCurrentCommand(self) -> str:
+    def command(self) -> str:
+        """
+        returns the current VM command
+        """
+
         return self.vm_commands[self.commandIndex]
 
 
     def hasMoreCommands(self) -> bool:
+        """
+        :return: true if the parser contains more commands to be parsed
+        """
+
         return self.commandIndex < len(self.vm_commands) - 1
 
 
     def advance(self) -> None:
-        self.commandIndex += 1
+        """
+        goes to the next vm command if there are any
+        """
+
+        if self.hasMoreCommands():
+            self.commandIndex += 1
+        else:
+            raise IndexError(f'out of commands at index {self.commandIndex}')
 
 
-    def getCommandType(self) -> Command:
-        # arithmetic+logical: [add sub neg, eq gt lt, and or not]
-        current = self.getCurrentCommand()
+    def commandType(self) -> Command:
+        """
+        :return: a Command enumeration corresponding to the command type of
+        the current vm command
+        """
+
+        current = self.command()
         tokens = current.split()
 
         command_name = tokens[0]
@@ -72,24 +102,15 @@ class Parser:
         if command_name == 'push':
             return Command.C_PUSH
 
-        raise ValueError(f'VM command not recognized: {self.getCurrentCommand()}')
-
-
-
-    def test(self):
-        current = self.getCurrentCommand()
-        tokens = current.split()
-
-        for t in tokens:
-            print(f'{t}')
+        raise ValueError(f'VM command not recognized: {self.command()}')
 
 
     def arg1(self) -> str:
         # TODO check: don't call if c_return
         #  return command (add, sub, etc) if c_arithmetic
-        return self.getCurrentCommand().split()[1]
+        return self.command().split()[1]
 
 
     def arg2(self) -> str:
         # TODO check: call only if current command is push, pop, function, call
-        return self.getCurrentCommand().split()[2]
+        return self.command().split()[2]
