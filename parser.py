@@ -43,11 +43,6 @@ class Parser:
             self.vm_commands.append(line)
 
 
-    def showCommands(self) -> None:
-        for line in self.vm_commands:
-            print(f'{line}')
-
-
     def getCurrentCommand(self) -> str:
         return self.vm_commands[self.commandIndex]
 
@@ -61,7 +56,40 @@ class Parser:
 
 
     def getCommandType(self) -> Command:
-        # TODO stub file; fix this later
-        return Command.C_ARITHMETIC
+        # arithmetic+logical: [add sub neg, eq gt lt, and or not]
+        current = self.getCurrentCommand()
+        tokens = current.split()
 
-    
+        command_name = tokens[0]
+        arithmetic = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
+
+        if command_name in arithmetic:
+            return Command.C_ARITHMETIC
+
+        if command_name == 'pop':
+            return Command.C_POP
+
+        if command_name == 'push':
+            return Command.C_PUSH
+
+        raise ValueError(f'VM command not recognized: {self.getCurrentCommand()}')
+
+
+
+    def test(self):
+        current = self.getCurrentCommand()
+        tokens = current.split()
+
+        for t in tokens:
+            print(f'{t}')
+
+
+    def arg1(self) -> str:
+        # TODO check: don't call if c_return
+        #  return command (add, sub, etc) if c_arithmetic
+        return self.getCurrentCommand().split()[1]
+
+
+    def arg2(self) -> str:
+        # TODO check: call only if current command is push, pop, function, call
+        return self.getCurrentCommand().split()[2]

@@ -6,8 +6,10 @@
 
 parser: parses each vm command into its lexical elements
     ☒ ignores all whitespace, full-line comments, midline comments
-    hasMoreCommands() → boolean
-    advance
+    ☒ hasMoreCommands() → boolean
+    ☒ advance
+
+
 
     arg1 → string. returns 1st argument of current command
         not called for return
@@ -44,9 +46,10 @@ def main(filename: str) -> None:
     writer = CodeWriter('output.asm')
 
     while parser.hasMoreCommands():
+        print(f'{parser.getCommandType().name}')
         parser.advance()
-        print(f'{parser.getCurrentCommand()}')
-        writer.writePushPop(parser.getCurrentCommand())
+        # print(f'{parser.getCurrentCommand()}')
+        # writer.writePushPop(parser.getCurrentCommand())
 
     writer.close()
 
