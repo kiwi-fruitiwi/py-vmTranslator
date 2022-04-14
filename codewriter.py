@@ -31,7 +31,22 @@ class CodeWriter:
 
 
         general solution for push segment i
+            @i
+            D=M
+            @seg        seg is a value in some RAM location pointing to an addr
+            D=D+M       D ← segmentPointer + i
 
+            @addr
+            M=D         addr ← segmentPointer + i
+            A=M
+            D=M         D ← RAM[addr]
+
+            @SP
+            A=M         put RAM[SP] → A
+
+            M=D         RAM[RAM[SP]] = RAM[addr], i.e. *SP=*addr
+            @SP
+            M=M+1       SP++; move the stack pointer forward one slot
 
         :param command:
         :return:
