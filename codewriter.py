@@ -14,6 +14,16 @@ class CodeWriter:
         remember to add comments to each command!
         pseudocode: all commands in format of push/pop segName i
             grab arg1 = seg, arg2 = i
+            segment names need to be parsed and replaced with their values
+                0   SP
+                1   LCL
+                2   ARG
+                3   THIS
+                4   THAT
+                5   TEMP
+                16  STATIC
+                
+                CONSTANT is only virtual
 
             pop segment i
                 @i
@@ -54,6 +64,17 @@ class CodeWriter:
                 @SP
                 M=M+1       SP++; move the stack pointer forward one slot
         """
+
+        segDict = {
+            'SP': 0,
+            'LCL': 1,
+            'ARG': 2,
+            'THIS': 3,
+            'THAT': 4,
+            'TEMP': 5,
+            'STATIC': 16
+        }
+
         self.output.write(f'writing asm code that implements {command}\n')
 
     def close(self):
