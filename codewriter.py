@@ -1,13 +1,66 @@
+# there are no arguments for not; push(!pop)
+import codewriter
+
+
+
+
 class CodeWriter:
+    """
+    invoked with a VM command, .e.g 'push static 5' or 'add', to return a
+    List[str] of Hack assembly commands that implement the VM command.
+    """
+
     def __init__(self, filename):
         self.output = open(filename, 'w')
 
     # writes to output file the asm commands that implement the vm command given
-    def writeArithmetic(self, command):
+    def writeArithmetic(self, command) -> [str]:  # List[str] requires import
         # remember to add comments to each command!
+        # arith = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
+        # self.output.write()
 
-        self.output.write(f'writing asm code that implements {command}\n')
-        # try output.writelines! writes an array of strings
+        match command:
+            case 'neg':
+                return self.__writeNeg()
+            case 'add':
+                return self.__writeAdd()
+            case 'not':
+                return self.__writeNot()
+            case _:
+                print(f'command not found')
+
+    # noinspection PyMethodMayBeStatic
+    def __writeAdd(self) -> [str]:
+        return [
+            '// [ VM COMMAND ] add',
+            '@SP',
+            'AM=M-1',
+            'D=M',      # D ← RAM[ RAM[SP-1] ], top of stack
+            '@SP',
+            'AM=M-1',
+            'M=D+M',
+            '@SP',
+            'M=M-1'
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writeNeg(self) -> [str]:
+        return [
+            '// [ VM COMMAND ] neg',
+            '@SP',
+            'A=M-1',
+            'M=-M'
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writeNot(self) -> [str]:
+        return [
+            '// [ VM COMMAND ] not',
+            '@SP',
+            'A=M-1',    # shortened from M=M-1; A=M
+            'M=!M'      # don't need @SP; M=M+1
+        ]
+
 
     def writePushPop(self, command):
         """
@@ -15,7 +68,7 @@ class CodeWriter:
         pseudocode: all commands in format of push/pop segName i
             grab arg1 = seg, arg2 = i
             segment names need to be parsed and replaced with their values
-                0   SP
+                0   SP→256
                 1   LCL
                 2   ARG
                 3   THIS

@@ -31,14 +31,14 @@ def main(filename: str) -> None:
     writer = CodeWriter('output.asm')
 
     while parser.hasMoreCommands():
-        print(f'{parser.commandType().name}')
+        # print(f'{parser.commandType().name}')
         parser.advance()
 
-    writer.close()
+    print(writer.writeArithmetic('neg'))
+    # writer.close()
 
 
 main('vm/StackTest.vm')
-
 
 
 
