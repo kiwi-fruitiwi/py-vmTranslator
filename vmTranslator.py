@@ -32,25 +32,31 @@ def main(filename: str) -> None:
     results = []
 
     while parser.hasMoreCommands():
+        parser.advance()
         # print(f'{parser.commandType().name}')
+        # arith = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
+        command = parser.command()
 
-        arith = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
         # process each command: is it writeArithmetic or writePushPop?
-        #   parse to see which one, then pipe to method
-        #   split()[0] is push / pop → writePushPop
-        #   else writeArithmetic, but check if cmd is 'in' arith
-        #       default case → error
         match parser.commandType():
             case Command.C_PUSH | Command.C_POP:
-                results.extend(writer.writeArithmetic(parser.command()))
+                results.extend(
+                    writer.writePushPop(
+                        command,
+                        parser.arg1(),
+                        int(parser.arg2())))
+
             case Command.C_ARITHMETIC:
-                results.extend(writer.writeArithmetic(parser.command()))
+                results.extend(writer.writeArithmetic(command))
+
             case _:
                 print(f'[ ERROR ] command not matched!')
-        parser.advance()
 
-    print(writer.writeArithmetic('neg'))
-    # writer.close()
+
+
+    for line in results:
+        print(line)
+    writer.close()
 
 
 main('vm/SimpleAdd.vm')

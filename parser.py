@@ -30,7 +30,8 @@ class Parser:
         vm_file = open(filename, 'r')
         lines = vm_file.readlines()
         self.vm_commands = []
-        self.commandIndex = 0  # current command index
+        self.commandIndex = -1  # current command index;
+        self.currentCommand = None  # initially there is no current command
 
         for line in lines:
             # ignore whitespace
@@ -59,15 +60,13 @@ class Parser:
         """
         returns the current VM command
         """
-
-        return self.vm_commands[self.commandIndex]
+        return self.currentCommand
 
 
     def hasMoreCommands(self) -> bool:
         """
         :return: true if the parser contains more commands to be parsed
         """
-
         return self.commandIndex < len(self.vm_commands) - 1
 
 
@@ -75,11 +74,8 @@ class Parser:
         """
         goes to the next vm command if there are any
         """
-
-        if self.hasMoreCommands():
-            self.commandIndex += 1
-        else:
-            raise IndexError(f'out of commands at index {self.commandIndex}')
+        self.commandIndex += 1
+        self.currentCommand = self.vm_commands[self.commandIndex]
 
 
     def commandType(self) -> Command:
@@ -108,7 +104,6 @@ class Parser:
 
     def arg1(self) -> str:
         # TODO check: don't call if c_return
-        #  return command (add, sub, etc) if c_arithmetic
         return self.command().split()[1]
 
 

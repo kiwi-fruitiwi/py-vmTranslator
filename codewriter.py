@@ -19,7 +19,8 @@ class CodeWriter:
         # arith = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
         # self.output.write()
 
-        print(f'{command}→{command.split()[0]}')
+        self.output.write(f'writing asm code that implements {command}\n')
+        # print(f'{command}→{command.split()[0]}')
         match command.split()[0]:
             case 'neg':
                 return self.__writeNeg()
@@ -62,8 +63,68 @@ class CodeWriter:
             'M=!M'      # don't need @SP; M=M+1
         ]
 
+    # noinspection PyMethodMayBeStatic
+    def __writePush(self, command: str, seg_location: int, n: int) -> [str]:
+        """
+        push segment i
+            @i
+            D=A
+            @seg        all segments are pointers to some addr in RAM
+            D=D+M       D ← segmentPointer + i
 
-    def writePushPop(self, command):
+            @addr
+            M=D         addr ← segmentPointer + i
+            A=M
+            D=M         D ← RAM[addr]
+
+            @SP
+            A=M         put RAM[SP] → A
+
+            M=D         RAM[RAM[SP]] = RAM[addr], i.e. *SP=*addr
+            @SP
+            M=M+1       SP++; move the stack pointer forward one slot
+        :param seg:
+        :return:
+        """
+        return [
+            '',
+            ''
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writePop(self, command: str, seg_location: int, n: int) -> [str]:
+        """
+        we can't pop from constant
+        pop segment i
+            @i
+            D=M         actually D=A if @i is a number instead of a variable
+            @seg
+            D=D+M       D=i+RAM[seg]
+
+            @popDest
+            M=D         put RAM[seg]+i into popDest variable
+
+            @SP
+            M=M-1       popping from the stack means decrementing SP
+
+            A=M
+            D=M         pattern for de-referencing:
+                        equivalent to 'value at this RAM location'
+                        D ← RAM[value of SP]
+                        this is what we are popping
+
+            @popDest
+            M=D         put popped value into RAM[seg]+i
+        :param seg:
+        :return:
+        """
+        return [
+            '// [ VM COMMAND ] ' + command,
+            ''
+        ]
+
+
+    def writePushPop(self, command: str, segment: str, n: int) -> [str]:
         """
         remember to add comments to each command!
         pseudocode: all commands in format of push/pop segName i
@@ -78,45 +139,6 @@ class CodeWriter:
                 16  STATIC
                 
                 CONSTANT is only virtual
-
-            pop segment i
-                @i
-                D=M         actually D=A if @i is a number instead of a variable
-                @seg
-                D=D+M       D=i+RAM[seg]
-
-                @popDest
-                M=D         put RAM[seg]+i into popDest variable
-
-                @SP
-                M=M-1       popping from the stack means decrementing SP
-
-                A=M
-                D=M         pattern for de-referencing:
-                            equivalent to 'value at this RAM location'
-                            D ← RAM[value of SP]
-                            this is what we are popping
-
-                @popDest
-                M=D         put popped value into RAM[seg]+i
-
-            push segment i
-                @i
-                D=A
-                @seg        all segments are pointers to some addr in RAM
-                D=D+M       D ← segmentPointer + i
-
-                @addr
-                M=D         addr ← segmentPointer + i
-                A=M
-                D=M         D ← RAM[addr]
-
-                @SP
-                A=M         put RAM[SP] → A
-
-                M=D         RAM[RAM[SP]] = RAM[addr], i.e. *SP=*addr
-                @SP
-                M=M+1       SP++; move the stack pointer forward one slot
         """
 
         segDict = {
@@ -130,6 +152,27 @@ class CodeWriter:
         }
 
         self.output.write(f'writing asm code that implements {command}\n')
+
+        match command.split()[0]:  # push or pop
+            case 'pop':
+                return self.__writePop(command, segDict[segment], n)
+            case 'push':
+                # take care of push constant i
+                if segment == 'constant':
+                    return [
+                        '// [ VM COMMAND ] ' + command,
+                        '@i',
+                        'D=A',      # load value of i into register D
+                        '@SP',
+                        'A=M',
+                        'M=D',
+                        '@SP',
+                        'M=M+1'
+                    ]
+                else:
+                    return self.__writePush(command, segDict[segment], n)
+            case _:
+                raise ValueError(f'{command} is not valid in writePushPop')
 
     def close(self):
         self.output.close()
