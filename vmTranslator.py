@@ -29,16 +29,32 @@ from parser import Parser, Command
 def main(filename: str) -> None:
     parser = Parser(filename)
     writer = CodeWriter('output.asm')
+    results = []
 
     while parser.hasMoreCommands():
         # print(f'{parser.commandType().name}')
+
+        arith = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
+        # process each command: is it writeArithmetic or writePushPop?
+        #   parse to see which one, then pipe to method
+        #   split()[0] is push / pop → writePushPop
+        #   else writeArithmetic, but check if cmd is 'in' arith
+        #       default case → error
+        match parser.commandType():
+            case Command.C_PUSH | Command.C_POP:
+                results.extend(writer.writeArithmetic(parser.command()))
+            case Command.C_ARITHMETIC:
+                results.extend(writer.writeArithmetic(parser.command()))
+            case _:
+                print(f'[ ERROR ] command not matched!')
         parser.advance()
 
     print(writer.writeArithmetic('neg'))
     # writer.close()
 
 
-main('vm/StackTest.vm')
+main('vm/SimpleAdd.vm')
+# main('vm/StackTest.vm')
 
 
 

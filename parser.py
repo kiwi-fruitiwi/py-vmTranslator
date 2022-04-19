@@ -19,6 +19,7 @@ class Parser:
     command into its lexical components, and provides convenient access to
     said components. ignores all whitespace and comments
     """
+
     def __init__(self, filename):
         """
         opens a .vm file and saves all vm commands for later processing but

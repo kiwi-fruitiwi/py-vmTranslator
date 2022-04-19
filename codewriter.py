@@ -19,7 +19,8 @@ class CodeWriter:
         # arith = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
         # self.output.write()
 
-        match command:
+        print(f'{command}→{command.split()[0]}')
+        match command.split()[0]:
             case 'neg':
                 return self.__writeNeg()
             case 'add':
@@ -27,7 +28,7 @@ class CodeWriter:
             case 'not':
                 return self.__writeNot()
             case _:
-                print(f'command not found')
+                print(f'command not found: {command}')
 
     # noinspection PyMethodMayBeStatic
     def __writeAdd(self) -> [str]:
