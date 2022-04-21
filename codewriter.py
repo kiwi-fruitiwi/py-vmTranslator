@@ -94,33 +94,29 @@ class CodeWriter:
     # noinspection PyMethodMayBeStatic
     def __writePop(self, command: str, seg_location: int, n: int) -> [str]:
         """
-        we can't pop from constant
-        pop segment i
-            @i
-            D=M         actually D=A if @i is a number instead of a variable
-            @seg
-            D=D+M       D=i+RAM[seg]
 
-            @popDest
-            M=D         put RAM[seg]+i into popDest variable
-
-            @SP
-            M=M-1       popping from the stack means decrementing SP
-
-            A=M
-            D=M         pattern for de-referencing:
-                        equivalent to 'value at this RAM location'
-                        D ← RAM[value of SP]
-                        this is what we are popping
-
-            @popDest
-            M=D         put popped value into RAM[seg]+i
-        :param seg:
+        :param command:
+        :param seg_location:
+        :param n:
         :return:
         """
         return [
             '// [ VM COMMAND ] ' + command,
-            ''
+            '@'+str(n),
+            'D=A',
+            '@'+str(seg_location),
+            'D=D+M',    # D=i+RAM[seg]
+            '@popDest',
+            'M=D'       # put RAM[seg]+i into popDest variable
+            '@SP',
+            'M=M-1',    # popping from the stack means decrementing SP
+            'A=M',
+            'D=M',      # pattern for de-referencing:
+                        # equivalent to 'value at this RAM location'
+                        # D ← RAM[value of SP]
+                        # this is what we are popping
+            '@popDest',
+            'M=D'       # put popped value into RAM[seg]+i
         ]
 
 
