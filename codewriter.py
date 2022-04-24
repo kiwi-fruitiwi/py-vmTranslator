@@ -99,8 +99,23 @@ class CodeWriter:
         :return:
         """
         return [
-            '',
-            ''
+            '// [ VM COMMAND ] ' + command,
+            '@'+str(n),
+            'D=A',
+            '@'+str(seg_location),
+            'D=D+M',    # D=i+RAM[seg]
+
+            '@addr',
+            'M=D'       # put RAM[seg]+i into addr variable
+            'A=M',
+            'D=M',      # D=RAM[addr]
+
+            '@SP',
+            'A=M',      # RAM[SP]→A
+            'M=D',      # *SP = *addr, or RAM[RAM[SP]]=RAM[addr]
+
+            '@SP',      # SP++
+            'M=M+1'
         ]
 
     # noinspection PyMethodMayBeStatic
