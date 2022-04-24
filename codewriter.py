@@ -2,8 +2,6 @@
 import codewriter
 
 
-
-
 class CodeWriter:
     """
     invoked with a VM command, .e.g 'push static 5' or 'add', to return a
@@ -36,13 +34,27 @@ class CodeWriter:
         return [
             '// [ VM COMMAND ] add',
             '@SP',
-            'AM=M-1',
+            'AM=M-1',   # SP--
             'D=M',      # D ← RAM[ RAM[SP-1] ], top of stack
             '@SP',
             'AM=M-1',
             'M=D+M',
             '@SP',
-            'M=M-1'
+            'M=M+1'
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writeSub(self) -> [str]:
+        return [
+            '// [ VM COMMAND ] sub',
+            '@SP',
+            'AM=M-1',
+            'D=M',      # D ← RAM[ RAM[SP-1] ], top of stack
+            '@SP',
+            'AM=M-1',
+            'M=M-D',    # RAM[SP-2] - RAM[SP-1]
+            '@SP',
+            'M=M+1'
         ]
 
     # noinspection PyMethodMayBeStatic
