@@ -10,6 +10,9 @@ class CodeWriter:
 
     def __init__(self, filename):
         self.output = open(filename, 'w')
+        self.eqCounter = 0
+        self.ltCounter = 0
+        self.gtCounter = 0
 
     # writes to output file the asm commands that implement the vm command given
     def writeArithmetic(self, command) -> [str]:  # List[str] requires import
@@ -43,9 +46,59 @@ class CodeWriter:
 
     # noinspection PyMethodMayBeStatic
     def __writeEq(self) -> [str]:
-        return [        # when SP is mentioned, it refers to the original SP
+        """
+        :return: list of assembly instructions equivalent to the 'eq' vm command
+        """
+        self.eqCounter += 1  # we need unique labels in asm for each translation
+        n = str(self.eqCounter)
+
+        # flow of this command:
+        # check equality of top to elements of the stack
+        #   if they are equal, set *(SP-2) to true, SP++
+        #   if they aren't, set *(SP-2) to false, SP++
+        #
+
+        # below, when SP-1 or SP-2 are mentioned, they refer to the top and 2nd
+        # values of the stack, where SP-1 is the top
+        return [
             '// [ VM COMMAND ] eq',
-            ''
+
+            # decrement stack pointer. load *(SP-1) → register D
+            '@SP',
+            'AM=M-1',   # combination of M=M-1, A=M
+            'D=M',      # *(SP-1) → register D
+
+            # time to grab *(SP-2)! value of 2nd stack element
+            '@SP',
+            'AM=M-1',
+            'D=M-D',    # store *(SP-2) - *(SP-1) → register D
+
+            # if top two elements of stack are equal, jump!
+            #   i.e. if *(SP-1) == *(SP-2), jump
+            '@PUSH_TRUE'+n,     # e.g. @PUSH_TRUE125
+            'D;JEQ',
+
+            # we didn't jump, so top two elements of stack are not equal
+            '@SP',
+            'A=M',      # *(SP-2) = 0
+            'M=0',      # 0 is false because it's 16 0's
+            '@SP',      # SP++; stack pointer always points to next available
+                        # memory location on the stack
+            'M=M+1',
+
+            # go to END label; we want to skip the 'they were equal' part below
+            '@END'+n,
+            'D;JNE',    # D still stores *(SP-2) - *(SP-1)
+
+            # otherwise the elements were equal!
+            '(PUSH_TRUE'+n+')',  # if *(SP-1) == *(SP-2), *(SP-1)←true, SP++
+            '@SP',      # *(SP-1)←true
+            'A=M',
+            'M=-1',     # -1 is true because it's 16 1's in two's complement
+            '@SP',      # SP++
+            'M=M+1',
+
+            '(END'+n+')'
         ]
 
     # noinspection PyMethodMayBeStatic
