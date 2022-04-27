@@ -24,10 +24,87 @@ class CodeWriter:
                 return self.__writeNeg()
             case 'add':
                 return self.__writeAdd()
+            case 'sub':
+                return self.__writeSub()
+            case 'eq':
+                return self.__writeEq()
+            case 'lt':
+                return self.__writeLt()
+            case 'gt':
+                return self.__writeGt()
             case 'not':
                 return self.__writeNot()
+            case 'and':
+                return self.__writeAnd()
+            case 'or':
+                return self.__writeOr()
             case _:
                 print(f'command not found: {command}')
+
+    # noinspection PyMethodMayBeStatic
+    def __writeEq(self) -> [str]:
+        return [        # when SP is mentioned, it refers to the original SP
+            '// [ VM COMMAND ] eq',
+            ''
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writeLt(self) -> [str]:
+        return [        # when SP is mentioned, it refers to the original SP
+            '// [ VM COMMAND ] lt',
+            ''
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writeGt(self) -> [str]:
+        return [        # when SP is mentioned, it refers to the original SP
+            '// [ VM COMMAND ] gt',
+            ''
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writeOr(self) -> [str]:  # same as 'and' but with one change
+        """
+        translates a vm 'or' command into its asm equivalent.
+        pseudocode:
+            a=pop()
+            b=pop()
+            push(a|b)
+        :return:
+        """
+        return [        # when SP is mentioned, it refers to the original SP
+            '// [ VM COMMAND ] or',
+            '@SP',      # SP--
+            'AM=M-1',
+            'D=M',      # D ← RAM[RAM[SP-1]], top of stack
+            '@SP',      # SP--
+            'AM=M-1',
+            'M=D|M',    # RAM[RAM[SP-2]] ← RAM[RAM[SP-1]] | RAM[RAM[SP-2]]
+            '@SP',
+            'M=M+1'
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writeAnd(self) -> [str]:
+        """
+        translates a vm 'and' command into its asm equivalent.
+        pseudocode:
+            a=pop()
+            b=pop()
+            push(a&b)
+        :return:
+        """
+        return [        # when SP is mentioned, it refers to the original SP
+            '// [ VM COMMAND ] and',
+            '@SP',      # SP--
+            'AM=M-1',
+            'D=M',      # D ← RAM[RAM[SP-1]], top of stack
+            '@SP',      # SP--
+            'AM=M-1',
+            'M=D&M',    # RAM[RAM[SP-2]] ← RAM[RAM[SP-1]] & RAM[RAM[SP-2]]
+            '@SP',
+            'M=M+1'
+        ]
 
     # noinspection PyMethodMayBeStatic
     def __writeAdd(self) -> [str]:
@@ -78,41 +155,27 @@ class CodeWriter:
     # noinspection PyMethodMayBeStatic
     def __writePush(self, command: str, seg_location: int, n: int) -> [str]:
         """
-        push segment i
-            @i
-            D=A
-            @seg        all segments are pointers to some addr in RAM
-            D=D+M       D ← segmentPointer + i
-
-            @addr
-            M=D         addr ← segmentPointer + i
-            A=M
-            D=M         D ← RAM[addr]
-
-            @SP
-            A=M         put RAM[SP] → A
-
-            M=D         RAM[RAM[SP]] = RAM[addr], i.e. *SP=*addr
-            @SP
-            M=M+1       SP++; move the stack pointer forward one slot
-        :param seg:
+        translates a vm 'push segment n' command to its equivalent asm
+        :param command:
+        :param seg_location:
+        :param n:
         :return:
         """
         return [
             '// [ VM COMMAND ] ' + command,
             '@'+str(n),
             'D=A',
-            '@'+str(seg_location),
+            '@'+str(seg_location),  # all segments are pointers to some RAM addr
             'D=D+M',    # D=i+RAM[seg]
 
             '@addr',
             'M=D'       # put RAM[seg]+i into addr variable
             'A=M',
-            'D=M',      # D=RAM[addr]
+            'D=M',      # D ← RAM[addr]
 
             '@SP',
             'A=M',      # RAM[SP]→A
-            'M=D',      # *SP = *addr, or RAM[RAM[SP]]=RAM[addr]
+            'M=D',      # *SP = *addr, i.e. RAM[RAM[SP]]=RAM[addr]
 
             '@SP',      # SP++
             'M=M+1'
@@ -121,7 +184,7 @@ class CodeWriter:
     # noinspection PyMethodMayBeStatic
     def __writePop(self, command: str, seg_location: int, n: int) -> [str]:
         """
-
+        translates a vm 'pop segment n' command to its equivalent asm
         :param command:
         :param seg_location:
         :param n:
@@ -145,7 +208,6 @@ class CodeWriter:
             '@popDest',
             'M=D'       # put popped value into RAM[seg]+i
         ]
-
 
     def writePushPop(self, command: str, segment: str, n: int) -> [str]:
         """
