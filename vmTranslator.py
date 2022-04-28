@@ -59,7 +59,7 @@ def main(filename: str) -> None:
     writer.close()
 
 
-main('vm/SimpleAdd.vm')
+main('vm/StaticTest.vm')
 # main('vm/StackTest.vm')
 
 

@@ -1,5 +1,12 @@
 # there are no arguments for not; push(!pop)
-import codewriter
+import enum
+
+
+# enumeration for our equality helper function which creates asm for eq, lt, gt
+class EqualityType(enum.Enum):
+    EQ = 1
+    LT = 2
+    GT = 3
 
 
 class CodeWriter:
@@ -46,9 +53,23 @@ class CodeWriter:
 
     # noinspection PyMethodMayBeStatic
     def __writeEq(self) -> [str]:
+        return self.__equalityHelper('EQ')
+
+    # noinspection PyMethodMayBeStatic
+    def __writeLt(self) -> [str]:
+        return self.__equalityHelper('LT')
+
+    # noinspection PyMethodMayBeStatic
+    def __writeGt(self) -> [str]:
+        return self.__equalityHelper('GT')
+
+    # noinspection PyMethodMayBeStatic
+    def __equalityHelper(self, equalityType: str) -> [str]:
         """
-        :return: list of assembly instructions equivalent to the 'eq' vm command
+        :return: list of assembly instructions equivalent to one of the three
+        equality vm commands, eq, lt, gt
         """
+
         self.eqCounter += 1  # we need unique labels in asm for each translation
         n = str(self.eqCounter)
 
@@ -61,58 +82,45 @@ class CodeWriter:
         # below, when SP-1 or SP-2 are mentioned, they refer to the top and 2nd
         # values of the stack, where SP-1 is the top
         return [
-            '// [ VM COMMAND ] eq',
+            '// [ VM COMMAND ] ' + equalityType,
 
             # decrement stack pointer. load *(SP-1) → register D
             '@SP',
-            'AM=M-1',   # combination of M=M-1, A=M
-            'D=M',      # *(SP-1) → register D
+            'AM=M-1',  # combination of M=M-1, A=M
+            'D=M',  # *(SP-1) → register D
 
             # time to grab *(SP-2)! value of 2nd stack element
             '@SP',
             'AM=M-1',
-            'D=M-D',    # store *(SP-2) - *(SP-1) → register D
+            'D=M-D',  # store *(SP-2) - *(SP-1) → register D
 
             # if top two elements of stack are equal, jump!
             #   i.e. if *(SP-1) == *(SP-2), jump
-            '@PUSH_TRUE'+n,     # e.g. @PUSH_TRUE125
-            'D;JEQ',
+            '@PUSH_TRUE' + n,  # e.g. @PUSH_TRUE125
+            'D;J' + equalityType,
 
             # we didn't jump, so top two elements of stack are not equal
             '@SP',
-            'A=M',      # *(SP-2) = 0
-            'M=0',      # 0 is false because it's 16 0's
-            '@SP',      # SP++; stack pointer always points to next available
-                        # memory location on the stack
+            'A=M',  # *(SP-2) = 0
+            'M=0',  # 0 is false because it's 16 0's
+            '@SP',  # SP++; stack pointer always points to next available
+            # memory location on the stack
             'M=M+1',
 
             # go to END label; we want to skip the 'they were equal' part below
-            '@END'+n,
-            'D;JNE',    # D still stores *(SP-2) - *(SP-1)
+            '@END' + n,
+            'D;JMP',  # D still stores *(SP-2) - *(SP-1)
+                      # can optimize to JMP instead of JNE for eq ← cody
 
             # otherwise the elements were equal!
-            '(PUSH_TRUE'+n+')',  # if *(SP-1) == *(SP-2), *(SP-1)←true, SP++
-            '@SP',      # *(SP-1)←true
+            '(PUSH_TRUE' + n + ')',  # if *(SP-1) == *(SP-2), *(SP-1)←true, SP++
+            '@SP',  # *(SP-1)←true
             'A=M',
-            'M=-1',     # -1 is true because it's 16 1's in two's complement
-            '@SP',      # SP++
+            'M=-1',  # -1 is true because it's 16 1's in two's complement
+            '@SP',  # SP++
             'M=M+1',
 
-            '(END'+n+')'
-        ]
-
-    # noinspection PyMethodMayBeStatic
-    def __writeLt(self) -> [str]:
-        return [        # when SP is mentioned, it refers to the original SP
-            '// [ VM COMMAND ] lt',
-            ''
-        ]
-
-    # noinspection PyMethodMayBeStatic
-    def __writeGt(self) -> [str]:
-        return [        # when SP is mentioned, it refers to the original SP
-            '// [ VM COMMAND ] gt',
-            ''
+            '(END' + n + ')'
         ]
 
     # noinspection PyMethodMayBeStatic
@@ -222,7 +230,7 @@ class CodeWriter:
             'D=D+M',    # D=i+RAM[seg]
 
             '@addr',
-            'M=D'       # put RAM[seg]+i into addr variable
+            'M=D',       # put RAM[seg]+i into addr variable
             'A=M',
             'D=M',      # D ← RAM[addr]
 
@@ -250,7 +258,7 @@ class CodeWriter:
             '@'+str(seg_location),
             'D=D+M',    # D=i+RAM[seg]
             '@popDest',
-            'M=D'       # put RAM[seg]+i into popDest variable
+            'M=D',       # put RAM[seg]+i into popDest variable
             '@SP',
             'M=M-1',    # popping from the stack means decrementing SP
             'A=M',
@@ -279,14 +287,24 @@ class CodeWriter:
                 CONSTANT is only virtual
         """
 
+        # segDict = {
+        #     'SP': 0,
+        #     'LCL': 1,
+        #     'ARG': 2,
+        #     'THIS': 3,
+        #     'THAT': 4,
+        #     'TEMP': 5,
+        #     'STATIC': 16
+        # }
+
         segDict = {
             'SP': 0,
-            'LCL': 1,
-            'ARG': 2,
-            'THIS': 3,
-            'THAT': 4,
-            'TEMP': 5,
-            'STATIC': 16
+            'local': 1,
+            'argument': 2,
+            'this': 3,
+            'that': 4,
+            'temp': 5,
+            'static': 16
         }
 
         self.output.write(f'writing asm code that implements {command}\n')
@@ -299,7 +317,9 @@ class CodeWriter:
                 if segment == 'constant':
                     return [
                         '// [ VM COMMAND ] ' + command,
-                        '@i',
+
+                        # *SP=i, SP++
+                        '@'+str(n),
                         'D=A',      # load value of i into register D
                         '@SP',
                         'A=M',
