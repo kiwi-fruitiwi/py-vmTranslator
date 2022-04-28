@@ -1,11 +1,123 @@
-writing asm code that implements push constant 111
-writing asm code that implements push constant 333
-writing asm code that implements push constant 888
-writing asm code that implements pop static 8
-writing asm code that implements pop static 3
-writing asm code that implements pop static 1
-writing asm code that implements push static 3
-writing asm code that implements push static 1
-writing asm code that implements sub
-writing asm code that implements push static 8
-writing asm code that implements add
+// [ VM COMMAND ] push constant 111
+@111
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// [ VM COMMAND ] push constant 333
+@333
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// [ VM COMMAND ] push constant 888
+@888
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// [ VM COMMAND ] pop static 8
+@8
+D=A
+@16
+D=D+M
+@popDest
+M=D
+@SP
+M=M-1
+A=M
+D=M
+@popDest
+M=D
+// [ VM COMMAND ] pop static 3
+@3
+D=A
+@16
+D=D+M
+@popDest
+M=D
+@SP
+M=M-1
+A=M
+D=M
+@popDest
+M=D
+// [ VM COMMAND ] pop static 1
+@1
+D=A
+@16
+D=D+M
+@popDest
+M=D
+@SP
+M=M-1
+A=M
+D=M
+@popDest
+M=D
+// [ VM COMMAND ] push static 3
+@3
+D=A
+@16
+D=D+M
+@addr
+M=D
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// [ VM COMMAND ] push static 1
+@1
+D=A
+@16
+D=D+M
+@addr
+M=D
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// [ VM COMMAND ] sub
+@SP
+AM=M-1
+D=M
+@SP
+AM=M-1
+M=M-D
+@SP
+M=M+1
+// [ VM COMMAND ] push static 8
+@8
+D=A
+@16
+D=D+M
+@addr
+M=D
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+// [ VM COMMAND ] add
+@SP
+AM=M-1
+D=M
+@SP
+AM=M-1
+M=D+M
+@SP
+M=M+1

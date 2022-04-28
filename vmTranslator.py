@@ -40,22 +40,18 @@ def main(filename: str) -> None:
         # process each command: is it writeArithmetic or writePushPop?
         match parser.commandType():
             case Command.C_PUSH | Command.C_POP:
-                results.extend(
-                    writer.writePushPop(
-                        command,
-                        parser.arg1(),
-                        int(parser.arg2())))
+                writer.writePushPop(
+                    command,
+                    parser.arg1(),
+                    int(parser.arg2())
+                )
 
             case Command.C_ARITHMETIC:
-                results.extend(writer.writeArithmetic(command))
+                writer.writeArithmetic(command)
 
             case _:
                 print(f'[ ERROR ] command not matched!')
 
-
-
-    for line in results:
-        print(line)
     writer.close()
 
 

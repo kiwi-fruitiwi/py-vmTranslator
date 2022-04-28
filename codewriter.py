@@ -17,39 +17,38 @@ class CodeWriter:
 
     def __init__(self, filename):
         self.output = open(filename, 'w')
-        self.eqCounter = 0
-        self.ltCounter = 0
-        self.gtCounter = 0
+        self.equalityCounter = 0
 
     # writes to output file the asm commands that implement the vm command given
     def writeArithmetic(self, command) -> [str]:  # List[str] requires import
         # remember to add comments to each command!
         # arith = ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not']
-        # self.output.write()
 
-        self.output.write(f'writing asm code that implements {command}\n')
         # print(f'{command}→{command.split()[0]}')
+        result = []
         match command.split()[0]:
             case 'neg':
-                return self.__writeNeg()
+                result = self.__writeNeg()
             case 'add':
-                return self.__writeAdd()
+                result = self.__writeAdd()
             case 'sub':
-                return self.__writeSub()
+                result = self.__writeSub()
             case 'eq':
-                return self.__writeEq()
+                result = self.__writeEq()
             case 'lt':
-                return self.__writeLt()
+                result = self.__writeLt()
             case 'gt':
-                return self.__writeGt()
+                result = self.__writeGt()
             case 'not':
-                return self.__writeNot()
+                result = self.__writeNot()
             case 'and':
-                return self.__writeAnd()
+                result = self.__writeAnd()
             case 'or':
-                return self.__writeOr()
+                result = self.__writeOr()
             case _:
                 print(f'command not found: {command}')
+
+        self.writelines(result)
 
     # noinspection PyMethodMayBeStatic
     def __writeEq(self) -> [str]:
@@ -70,8 +69,8 @@ class CodeWriter:
         equality vm commands, eq, lt, gt
         """
 
-        self.eqCounter += 1  # we need unique labels in asm for each translation
-        n = str(self.eqCounter)
+        self.equalityCounter += 1  # we need unique labels in asm
+        n = str(self.equalityCounter)
 
         # flow of this command:
         # check equality of top to elements of the stack
@@ -96,7 +95,7 @@ class CodeWriter:
 
             # if top two elements of stack are equal, jump!
             #   i.e. if *(SP-1) == *(SP-2), jump
-            '@PUSH_TRUE' + n,  # e.g. @PUSH_TRUE125
+            '@PUSH_TRUE_' + n,  # e.g. @PUSH_TRUE_12
             'D;J' + equalityType,
 
             # we didn't jump, so top two elements of stack are not equal
@@ -307,15 +306,14 @@ class CodeWriter:
             'static': 16
         }
 
-        self.output.write(f'writing asm code that implements {command}\n')
-
+        result = []
         match command.split()[0]:  # push or pop
             case 'pop':
-                return self.__writePop(command, segDict[segment], n)
+                result = self.__writePop(command, segDict[segment], n)
             case 'push':
                 # take care of push constant i
                 if segment == 'constant':
-                    return [
+                    result = [
                         '// [ VM COMMAND ] ' + command,
 
                         # *SP=i, SP++
@@ -328,9 +326,16 @@ class CodeWriter:
                         'M=M+1'
                     ]
                 else:
-                    return self.__writePush(command, segDict[segment], n)
+                    result = self.__writePush(command, segDict[segment], n)
             case _:
                 raise ValueError(f'{command} is not valid in writePushPop')
+
+        self.writelines(result)
+
+    def writelines(self, lines: [str]):
+        # adds newlines between every entry in lines
+        self.output.write('\n'.join(lines) + '\n')
+
 
     def close(self):
         self.output.close()
