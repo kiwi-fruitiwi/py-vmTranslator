@@ -55,10 +55,12 @@ def main(filename: str) -> None:
     writer.close()
 
 
+# main('vm/subTest.vm')
 # main('vm/StaticTest.vm')
 # main('vm/PointerTest.vm')
-# main('vm/subTest.vm')
-main('vm/BasicTest.vm')
+# main('vm/BasicTest.vm')
+main('vm/StaticTest.vm')
+
 
 ''' 
 notes from lecture

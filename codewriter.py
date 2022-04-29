@@ -50,6 +50,61 @@ class CodeWriter:
 
         self.writelines(result)
 
+    def writePushPop(self, command: str, segment: str, n: int) -> [str]:
+        """
+        remember to add comments to each command!
+        pseudocode: all commands in format of push/pop segName i
+            grab arg1 = seg, arg2 = i
+            segment names need to be parsed and replaced with their values
+                0   SP→256
+                1   LCL
+                2   ARG
+                3   THIS
+                4   THAT
+                5   TEMP ← needs special case
+                16  STATIC ← needs special case
+
+                CONSTANT is only virtual
+        """
+
+        result = []
+        segDict = {
+            'SP': 0,
+            'local': 1,
+            'argument': 2,
+            'this': 3,
+            'that': 4,
+            'temp': 5,
+            'static': 16
+        }
+
+        match command.split()[0]:  # push or pop
+            case 'pop':
+                if segment == 'temp':
+                    result = self.__writePopTemp(command, n)
+                elif segment == 'pointer':
+                    result = self.__writePopPointer(command, n)
+                elif segment == 'static':
+                    result = self.__writePopStatic(command, n)
+                else:
+                    result = self.__writePopLATT(command, segDict[segment], n)
+            case 'push':
+                # take care of push constant i
+                if segment == 'constant':
+                    result = self.__writePushConstant(command, n)
+                elif segment == 'temp':
+                    result = self.__writePushTemp(command, n)
+                elif segment == 'pointer':
+                    result = self.__writePushPointer(command, n)
+                elif segment == 'static':
+                    result = self.__writePushStatic(command, n)
+                else:
+                    result = self.__writePushLATT(command, segDict[segment], n)
+            case _:
+                raise ValueError(f'{command} is not valid in writePushPop')
+
+        self.writelines(result)
+
     # noinspection PyMethodMayBeStatic
     def __writeEq(self) -> [str]:
         return self.__equalityHelper('EQ')
@@ -278,56 +333,37 @@ class CodeWriter:
             'M=D'       # put popped value into RAM[popDest]
         ]
 
-    def writePushPop(self, command: str, segment: str, n: int) -> [str]:
-        """
-        remember to add comments to each command!
-        pseudocode: all commands in format of push/pop segName i
-            grab arg1 = seg, arg2 = i
-            segment names need to be parsed and replaced with their values
-                0   SP→256
-                1   LCL
-                2   ARG
-                3   THIS
-                4   THAT
-                5   TEMP ← needs special case
-                16  STATIC ← needs special case
-                
-                CONSTANT is only virtual
-        """
+    # noinspection PyMethodMayBeStatic
+    def __writePushStatic(self, command: str, n: int) -> [str]:
+        return [
+            # push static 5 means push the value of Foo.5 onto the stack
+            # 'Foo' is arbitrary, suggested to be the filename. but I'll choose
+            # kiwi :p
+            '// [ VM COMMAND ] ' + command,
+            f'@Kiwi.{str(n)}',
+            'D=M',  # @Foo.5 stored into register D
 
-        result = []
-        segDict = {
-            'SP': 0,
-            'local': 1,
-            'argument': 2,
-            'this': 3,
-            'that': 4,
-            'temp': 5,
-            'static': 16
-        }
+            '@SP',
+            'A=M',
+            'M=D',  # @Foo.5 → *SP
 
-        match command.split()[0]:  # push or pop
-            case 'pop':
-                if segment == 'temp':
-                    result = self.__writePopTemp(command, n)
-                elif segment == 'pointer':
-                    result = self.__writePopPointer(command, n)
-                else:
-                    result = self.__writePopLATT(command, segDict[segment], n)
-            case 'push':
-                # take care of push constant i
-                if segment == 'constant':
-                    result = self.__writePushConstant(command, n)
-                elif segment == 'temp':
-                    result = self.__writePushTemp(command, n)
-                elif segment == 'pointer':
-                    result = self.__writePushPointer(command, n)
-                else:
-                    result = self.__writePushLATT(command, segDict[segment], n)
-            case _:
-                raise ValueError(f'{command} is not valid in writePushPop')
+            '@SP',
+            'M=M+1'
+        ]
 
-        self.writelines(result)
+    # noinspection PyMethodMayBeStatic
+    def __writePopStatic(self, command: str, n: int) -> [str]:
+        return [
+            # pop static 5 means store *[SP-1] into new variable @Foo.5
+            '// [ VM COMMAND ] ' + command,
+            '@SP',
+            'M=M-1',
+            'A=M',
+            'D=M',      # D ← top element of stack
+
+            f'@Kiwi.{str(n)}',
+            'M=D'
+        ]
 
     # noinspection PyMethodMayBeStatic
     def __writePushPointer(self, command: str, n: int) -> [str]:
