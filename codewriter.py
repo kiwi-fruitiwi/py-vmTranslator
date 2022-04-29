@@ -357,8 +357,7 @@ class CodeWriter:
             # pop static 5 means store *[SP-1] into new variable @Foo.5
             '// [ VM COMMAND ] ' + command,
             '@SP',
-            'M=M-1',
-            'A=M',
+            'AM=M-1',
             'D=M',      # D ← top element of stack
 
             f'@Kiwi.{str(n)}',
