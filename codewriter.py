@@ -336,6 +336,8 @@ class CodeWriter:
                         'M=D'       # put popped value into RAM[i+5]
                                     # *addr = *SP
                     ]
+                elif segment == 'pointer':
+                    result = self.__writePopPointer(command, n)
                 else:
                     result = self.__writePop(command, segDict[segment], n)
             case 'push':
@@ -374,6 +376,9 @@ class CodeWriter:
                         '@SP',      # SP++
                         'M=M+1'
                     ]
+
+                elif segment == 'pointer':
+                    result = self.__writePushPointer(command, n)
                 else:
                     result = self.__writePush(command, segDict[segment], n)
             case _:
@@ -381,10 +386,46 @@ class CodeWriter:
 
         self.writelines(result)
 
+    # noinspection PyMethodMayBeStatic
+    def __writePushPointer(self, command: str, n: int) -> [str]:
+        return [
+            # given: 'pointer 0' is THIS. 'pointer 1' is THAT. n∈[0,1]
+            # conveniently we can use i+3 since THIs is at index 3 while THAT
+            # is at index 4
+            '// [ VM COMMAND ] ' + command,
+            '@'+str(n),
+            'D=A',
+            '@3',
+            'A=D+A',    # select RAM[i+3]
+            'D=M',      # D ← RAM[i+3]
+
+            '@SP',
+            'A=M',
+            'M=D',      # RAM[RAM[SP]] ← RAM[i+3]
+
+            '@SP',      # SP++
+            'M=M+1',
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writePopPointer(self, command: str, n: int) -> [str]:
+        return [
+            # given: 'pointer 0' is THIS. 'pointer 1' is THAT. n∈[0,1]
+            # conveniently we can use i+3 since THIs is at index 3 while THAT
+            # is at index 4
+            '// [ VM COMMAND ] ' + command,
+            '@SP',
+            'M=M-1',
+            'A=M',
+            'D=M',  # store *[SP-1] → register D
+
+            '@'+str(n+3),
+            'M=D'   # THIS/THAT = *[SP-1]
+        ]
+
     def writelines(self, lines: [str]):
         # adds newlines between every entry in lines
         self.output.write('\n'.join(lines) + '\n')
-
 
     def close(self):
         self.output.close()

@@ -1,79 +1,43 @@
-// [ VM COMMAND ] push constant 10
-@10
+// [ VM COMMAND ] push constant 3030
+@3030
 D=A
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// [ VM COMMAND ] pop local 0
-@0
-D=A
-@1
-D=D+M
-@popDest
-M=D
+// [ VM COMMAND ] pop pointer 0
 @SP
 M=M-1
 A=M
 D=M
-@popDest
-A=M
+@3
 M=D
-// [ VM COMMAND ] push constant 21
-@21
+// [ VM COMMAND ] push constant 3040
+@3040
 D=A
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// [ VM COMMAND ] push constant 22
-@22
-D=A
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// [ VM COMMAND ] pop argument 2
-@2
-D=A
-@2
-D=D+M
-@popDest
-M=D
+// [ VM COMMAND ] pop pointer 1
 @SP
 M=M-1
 A=M
 D=M
-@popDest
-A=M
+@4
 M=D
-// [ VM COMMAND ] pop argument 1
-@1
-D=A
-@2
-D=D+M
-@popDest
-M=D
-@SP
-M=M-1
-A=M
-D=M
-@popDest
-A=M
-M=D
-// [ VM COMMAND ] push constant 36
-@36
+// [ VM COMMAND ] push constant 32
+@32
 D=A
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// [ VM COMMAND ] pop this 6
-@6
+// [ VM COMMAND ] pop this 2
+@2
 D=A
 @3
 D=D+M
@@ -86,94 +50,44 @@ D=M
 @popDest
 A=M
 M=D
-// [ VM COMMAND ] push constant 42
-@42
+// [ VM COMMAND ] push constant 46
+@46
 D=A
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// [ VM COMMAND ] push constant 45
-@45
-D=A
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// [ VM COMMAND ] pop that 5
-@5
-D=A
-@4
-D=D+M
-@popDest
-M=D
-@SP
-M=M-1
-A=M
-D=M
-@popDest
-A=M
-M=D
-// [ VM COMMAND ] pop that 2
-@2
-D=A
-@4
-D=D+M
-@popDest
-M=D
-@SP
-M=M-1
-A=M
-D=M
-@popDest
-A=M
-M=D
-// [ VM COMMAND ] push constant 510
-@510
-D=A
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// [ VM COMMAND ] pop temp 6
+// [ VM COMMAND ] pop that 6
 @6
 D=A
-@5
-D=D+A
-@addr
+@4
+D=D+M
+@popDest
 M=D
 @SP
 M=M-1
 A=M
 D=M
-@addr
+@popDest
 A=M
 M=D
-// [ VM COMMAND ] push local 0
+// [ VM COMMAND ] push pointer 0
 @0
 D=A
-@1
-D=D+M
-@addr
-M=D
-A=M
+@3
+A=D+A
 D=M
 @SP
 A=M
 M=D
 @SP
 M=M+1
-// [ VM COMMAND ] push that 5
-@5
+// [ VM COMMAND ] push pointer 1
+@1
 D=A
-@4
-D=D+M
-@addr
-M=D
-A=M
+@3
+A=D+A
 D=M
 @SP
 A=M
@@ -189,10 +103,10 @@ AM=M-1
 M=D+M
 @SP
 M=M+1
-// [ VM COMMAND ] push argument 1
-@1
-D=A
+// [ VM COMMAND ] push this 2
 @2
+D=A
+@3
 D=D+M
 @addr
 M=D
@@ -212,58 +126,14 @@ AM=M-1
 M=M-D
 @SP
 M=M+1
-// [ VM COMMAND ] push this 6
+// [ VM COMMAND ] push that 6
 @6
 D=A
-@3
+@4
 D=D+M
 @addr
 M=D
 A=M
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// [ VM COMMAND ] push this 6
-@6
-D=A
-@3
-D=D+M
-@addr
-M=D
-A=M
-D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1
-// [ VM COMMAND ] add
-@SP
-AM=M-1
-D=M
-@SP
-AM=M-1
-M=D+M
-@SP
-M=M+1
-// [ VM COMMAND ] sub
-@SP
-AM=M-1
-D=M
-@SP
-AM=M-1
-M=M-D
-@SP
-M=M+1
-// [ VM COMMAND ] push temp 6
-@6
-D=A
-@5
-D=D+A
-A=D
 D=M
 @SP
 A=M
