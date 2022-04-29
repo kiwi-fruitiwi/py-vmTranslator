@@ -112,7 +112,9 @@ class CodeWriter:
                       # can optimize to JMP instead of JNE for eq ← cody
 
             # otherwise the elements were equal!
-            '(PUSH_TRUE' + n + ')',  # if *(SP-1) == *(SP-2), *(SP-1)←true, SP++
+            '(PUSH_TRUE_' + n + ')',  # if *(SP-1) == *(SP-2)
+                                      # *(SP-1)←true
+                                      # SP++
             '@SP',  # *(SP-1)←true
             'A=M',
             'M=-1',  # -1 is true because it's 16 1's in two's complement
@@ -182,6 +184,8 @@ class CodeWriter:
 
     # noinspection PyMethodMayBeStatic
     def __writeSub(self) -> [str]:
+        # we always want the deeper stack element to subtract the shallower one
+        #   push 5, push 1, sub → 5-1=4
         return [
             '// [ VM COMMAND ] sub',
             '@SP',
@@ -229,9 +233,9 @@ class CodeWriter:
             'D=D+M',    # D=i+RAM[seg]
 
             '@addr',
-            'M=D',       # put RAM[seg]+i into addr variable
+            'M=D',      # put RAM[seg]+i into addr variable
             'A=M',
-            'D=M',      # D ← RAM[addr]
+            'D=M',      # D ← RAM[addr] TODO condense +pop
 
             '@SP',
             'A=M',      # RAM[SP]→A
@@ -257,7 +261,7 @@ class CodeWriter:
             '@'+str(seg_location),
             'D=D+M',    # D=i+RAM[seg]
             '@popDest',
-            'M=D',       # put RAM[seg]+i into popDest variable
+            'M=D',      # put RAM[seg]+i into popDest variable
             '@SP',
             'M=M-1',    # popping from the stack means decrementing SP
             'A=M',
@@ -266,7 +270,8 @@ class CodeWriter:
                         # D ← RAM[value of SP]
                         # this is what we are popping
             '@popDest',
-            'M=D'       # put popped value into RAM[seg]+i
+            'A=M',      # select RAM[popDest]
+            'M=D'       # put popped value into RAM[popDest]
         ]
 
     def writePushPop(self, command: str, segment: str, n: int) -> [str]:
@@ -309,7 +314,30 @@ class CodeWriter:
         result = []
         match command.split()[0]:  # push or pop
             case 'pop':
-                result = self.__writePop(command, segDict[segment], n)
+                if segment == 'temp':
+                    result = [
+                        '// [ VM COMMAND ] ' + command,
+                        '@' + str(n),
+                        'D=A',
+                        '@5',       # pattern for tmp is always i+5
+                                    # tmp lives in RAM[5-12]
+                        'D=D+A',    # i+5 → D
+
+                        '@addr',
+                        'M=D',      # put i+5 into addr variable
+
+                        '@SP',      # SP--
+                        'M=M-1',
+                        'A=M',
+                        'D=M',      # this is what we are popping
+
+                        '@addr',
+                        'A=M',
+                        'M=D'       # put popped value into RAM[i+5]
+                                    # *addr = *SP
+                    ]
+                else:
+                    result = self.__writePop(command, segDict[segment], n)
             case 'push':
                 # take care of push constant i
                 if segment == 'constant':
@@ -321,8 +349,29 @@ class CodeWriter:
                         'D=A',      # load value of i into register D
                         '@SP',
                         'A=M',
+
                         'M=D',
                         '@SP',
+                        'M=M+1'
+                    ]
+
+                elif segment == 'temp':
+                    result = [
+                        '// [ VM COMMAND ] ' + command,
+                        '@'+str(n),
+                        'D=A',
+                        '@5',       # pattern for tmp is always i+5
+                                    # tmp lives in RAM[5-12]
+                        'D=D+A',    # i+5 → D
+
+                        'A=D',      # select RAM[i+5]
+                        'D=M',      # RAM[i+5] → D
+
+                        '@SP',
+                        'A=M',      # RAM[SP]→A
+                        'M=D',      # *SP = *addr, i.e. RAM[RAM[SP]]=RAM[i+5]
+
+                        '@SP',      # SP++
                         'M=M+1'
                     ]
                 else:

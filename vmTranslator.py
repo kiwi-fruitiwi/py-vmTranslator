@@ -55,9 +55,9 @@ def main(filename: str) -> None:
     writer.close()
 
 
-main('vm/StaticTest.vm')
-# main('vm/StackTest.vm')
-
+# main('vm/StaticTest.vm')
+main('vm/BasicTest.vm')
+# main('vm/subTest.vm')
 
 
 ''' 
