@@ -56,9 +56,9 @@ def main(filename: str) -> None:
 
 
 # main('vm/StaticTest.vm')
-main('vm/PointerTest.vm')
+# main('vm/PointerTest.vm')
 # main('vm/subTest.vm')
-
+main('vm/BasicTest.vm')
 
 ''' 
 notes from lecture

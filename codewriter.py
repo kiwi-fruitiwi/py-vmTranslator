@@ -217,9 +217,11 @@ class CodeWriter:
         ]
 
     # noinspection PyMethodMayBeStatic
-    def __writePush(self, command: str, seg_location: int, n: int) -> [str]:
+    def __writePushLATT(self, command: str, seg_location: int, n: int) -> [str]:
         """
-        translates a vm 'push segment n' command to its equivalent asm
+        translates a vm 'push segment n' command to its equivalent asm where
+        segment is lcl, arg, this, or that. the other 4 segments need special
+        handling.
         :param command:
         :param seg_location:
         :param n:
@@ -246,9 +248,11 @@ class CodeWriter:
         ]
 
     # noinspection PyMethodMayBeStatic
-    def __writePop(self, command: str, seg_location: int, n: int) -> [str]:
+    def __writePopLATT(self, command: str, seg_location: int, n: int) -> [str]:
         """
-        translates a vm 'pop segment n' command to its equivalent asm
+        translates a vm 'pop segment n' command to its equivalent asm where
+        segment is lcl, arg, this, or that. the other 4 segments need special
+        handling.
         :param command:
         :param seg_location:
         :param n:
@@ -285,22 +289,13 @@ class CodeWriter:
                 2   ARG
                 3   THIS
                 4   THAT
-                5   TEMP
-                16  STATIC
+                5   TEMP ← needs special case
+                16  STATIC ← needs special case
                 
                 CONSTANT is only virtual
         """
 
-        # segDict = {
-        #     'SP': 0,
-        #     'LCL': 1,
-        #     'ARG': 2,
-        #     'THIS': 3,
-        #     'THAT': 4,
-        #     'TEMP': 5,
-        #     'STATIC': 16
-        # }
-
+        result = []
         segDict = {
             'SP': 0,
             'local': 1,
@@ -311,76 +306,24 @@ class CodeWriter:
             'static': 16
         }
 
-        result = []
         match command.split()[0]:  # push or pop
             case 'pop':
                 if segment == 'temp':
-                    result = [
-                        '// [ VM COMMAND ] ' + command,
-                        '@' + str(n),
-                        'D=A',
-                        '@5',       # pattern for tmp is always i+5
-                                    # tmp lives in RAM[5-12]
-                        'D=D+A',    # i+5 → D
-
-                        '@addr',
-                        'M=D',      # put i+5 into addr variable
-
-                        '@SP',      # SP--
-                        'M=M-1',
-                        'A=M',
-                        'D=M',      # this is what we are popping
-
-                        '@addr',
-                        'A=M',
-                        'M=D'       # put popped value into RAM[i+5]
-                                    # *addr = *SP
-                    ]
+                    result = self.__writePopTemp(command, n)
                 elif segment == 'pointer':
                     result = self.__writePopPointer(command, n)
                 else:
-                    result = self.__writePop(command, segDict[segment], n)
+                    result = self.__writePopLATT(command, segDict[segment], n)
             case 'push':
                 # take care of push constant i
                 if segment == 'constant':
-                    result = [
-                        '// [ VM COMMAND ] ' + command,
-
-                        # *SP=i, SP++
-                        '@'+str(n),
-                        'D=A',      # load value of i into register D
-                        '@SP',
-                        'A=M',
-
-                        'M=D',
-                        '@SP',
-                        'M=M+1'
-                    ]
-
+                    result = self.__writePushConstant(command, n)
                 elif segment == 'temp':
-                    result = [
-                        '// [ VM COMMAND ] ' + command,
-                        '@'+str(n),
-                        'D=A',
-                        '@5',       # pattern for tmp is always i+5
-                                    # tmp lives in RAM[5-12]
-                        'D=D+A',    # i+5 → D
-
-                        'A=D',      # select RAM[i+5]
-                        'D=M',      # RAM[i+5] → D
-
-                        '@SP',
-                        'A=M',      # RAM[SP]→A
-                        'M=D',      # *SP = *addr, i.e. RAM[RAM[SP]]=RAM[i+5]
-
-                        '@SP',      # SP++
-                        'M=M+1'
-                    ]
-
+                    result = self.__writePushTemp(command, n)
                 elif segment == 'pointer':
                     result = self.__writePushPointer(command, n)
                 else:
-                    result = self.__writePush(command, segDict[segment], n)
+                    result = self.__writePushLATT(command, segDict[segment], n)
             case _:
                 raise ValueError(f'{command} is not valid in writePushPop')
 
@@ -393,10 +336,7 @@ class CodeWriter:
             # conveniently we can use i+3 since THIs is at index 3 while THAT
             # is at index 4
             '// [ VM COMMAND ] ' + command,
-            '@'+str(n),
-            'D=A',
-            '@3',
-            'A=D+A',    # select RAM[i+3]
+            '@'+str(n+3),
             'D=M',      # D ← RAM[i+3]
 
             '@SP',
@@ -421,6 +361,67 @@ class CodeWriter:
 
             '@'+str(n+3),
             'M=D'   # THIS/THAT = *[SP-1]
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writePushConstant(self, command: str, n: int) -> [str]:
+        return [
+            '// [ VM COMMAND ] ' + command,
+
+            # *SP=i, SP++
+            '@' + str(n),
+            'D=A',  # load value of i into register D
+            '@SP',
+            'A=M',
+
+            'M=D',
+            '@SP',
+            'M=M+1'
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writePopTemp(self, command: str, n: int):
+        return [
+            '// [ VM COMMAND ] ' + command,
+            '@' + str(n),
+            'D=A',
+            '@5',       # pattern for tmp is always i+5
+                        # tmp lives in RAM[5-12]
+            'D=D+A',    # i+5 → D
+
+            '@addr',
+            'M=D',      # put i+5 into addr variable
+
+            '@SP',      # SP--
+            'M=M-1',
+            'A=M',
+            'D=M',      # this is what we are popping
+
+            '@addr',
+            'A=M',
+            'M=D'       # put popped value into RAM[i+5]
+                        # *addr = *SP
+        ]
+
+    # noinspection PyMethodMayBeStatic
+    def __writePushTemp(self, command: str, n: int):
+        return [
+            '// [ VM COMMAND ] ' + command,
+            '@'+str(n),
+            'D=A',
+            '@5',       # pattern for tmp is always i+5
+                        # tmp lives in RAM[5-12]
+            'D=D+A',    # i+5 → D
+
+            'A=D',      # select RAM[i+5]
+            'D=M',      # RAM[i+5] → D
+
+            '@SP',
+            'A=M',      # RAM[SP]→A
+            'M=D',      # *SP = *addr, i.e. RAM[RAM[SP]]=RAM[i+5]
+
+            '@SP',      # SP++
+            'M=M+1'
         ]
 
     def writelines(self, lines: [str]):
